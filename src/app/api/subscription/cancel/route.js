@@ -1,5 +1,5 @@
-import { callPaddleApi } from '../lib/paddle-utils.js';
-import { createSupabaseAdminClient } from '../lib/supabase.js';
+import { callPaddleApi } from '../../lib/paddle-utils.js';
+import { createSupabaseAdminClient } from '../../lib/supabase.js';
 
 export async function onRequest(context) {
   // Set CORS headers (development mode)
@@ -77,7 +77,6 @@ export async function onRequest(context) {
       .limit(1)
       .single();
     
-    console.log('Subscription to be deleted', subscription);
     if (subscriptionError) {
       console.error('Error getting subscription:', subscriptionError);
       return new Response(
@@ -102,7 +101,6 @@ export async function onRequest(context) {
         effective_from: 'immediately'
       });
       
-      console.log('paddleResponse', paddleResponse);
       if (!paddleResponse.ok) {
         throw new Error('Failed to cancel Paddle subscription');
       }

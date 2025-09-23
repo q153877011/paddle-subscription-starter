@@ -1,28 +1,14 @@
-import { createSupabaseAdminClient } from '../lib/supabase.js';
+import { createSupabaseClient } from '../../lib/supabase.js';
 
-export async function onRequest(context) {
+export async function GET(request) {
   // Set CORS headers (development mode)
   const headers = {
     'Content-Type': 'application/json',
   };
 
-
-  // Handle preflight requests
-  if (context.request.method === 'OPTIONS') {
-    return new Response(null, { headers });
-  }
-
-  // Only allow GET requests
-  if (context.request.method !== 'GET') {
-    return new Response(
-      JSON.stringify({ success: false, message: 'Method not allowed' }),
-      { status: 405, headers }
-    );
-  }
-
   try {
     // Get the authorization token from the request
-    const authHeader = context.request.headers.get('Authorization');
+    const authHeader = request.headers.get('Authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return new Response(
         JSON.stringify({ success: false, message: 'Unauthorized' }),
@@ -33,11 +19,10 @@ export async function onRequest(context) {
     const token = authHeader.split(' ')[1];
     
     // Initialize Supabase client
-    const supabase = createSupabaseAdminClient(context);
+    const supabase = createSupabaseClient();
     
     // Verify user token and get user information
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-    
     if (authError || !user) {
       return new Response(
         JSON.stringify({ success: false, message: 'Invalid access token' }),
@@ -51,7 +36,6 @@ export async function onRequest(context) {
       .select('customer_id')
       .eq('email', user.email)
       .single();
-    
     if (customerError && customerError.code !== 'PGRST116') { // PGRST116 is "No rows returned"
       console.error('Error getting customer:', customerError);
       return new Response(

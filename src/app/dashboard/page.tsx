@@ -25,7 +25,7 @@ export default function DashboardPage() {
         // Get subscription information from edge function API
         const response = await fetch(
           process.env.NEXT_PUBLIC_DEV 
-            ? `${process.env.NEXT_PUBLIC_API_URL_DEV}/subscription/status` 
+            ? `${process.env.NEXT_PUBLIC_API_URL_DEV}/api/subscription/status` 
             : "/subscription/status",
           {
             headers: {

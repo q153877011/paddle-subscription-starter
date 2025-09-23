@@ -1,28 +1,14 @@
-import { createSupabaseAdminClient } from '../lib/supabase.js';
+import { createSupabaseClient } from '../../lib/supabase.js';
 
-export async function onRequest(context) {
+export async function POST(request) {
   // Set CORS headers (development mode)
   const headers = {
     'Content-Type': 'application/json',
   };
 
-
-  // Handle preflight requests
-  if (context.request.method === 'OPTIONS') {
-    return new Response(null, { headers });
-  }
-
-  // Only allow POST requests
-  if (context.request.method !== 'POST') {
-    return new Response(
-      JSON.stringify({ success: false, message: 'Method not allowed' }),
-      { status: 405, headers }
-    );
-  }
-
   try {
     // Parse request body
-    const reqBody = await context.request.json();
+    const reqBody = await request.json();
     const { email, password } = reqBody;
 
     if (!email || !password) {
@@ -33,7 +19,7 @@ export async function onRequest(context) {
     }
 
     // Initialize Supabase client
-    const supabase = createSupabaseAdminClient(context);
+    const supabase = createSupabaseClient();
 
     // Use Supabase to login
     const { data, error } = await supabase.auth.signInWithPassword({

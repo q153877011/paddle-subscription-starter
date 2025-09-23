@@ -26,7 +26,7 @@ export function AuthForm({ type }: AuthFormProps) {
     setEmailSent(false);
 
     try {
-      const endpoint = type === "login" ? "/auth/login" : "/auth/register";
+      const endpoint = type === "login" ? "/api/auth/login" : "/api/auth/register";
       const body = type === "login" 
         ? { email, password } 
         : { name, email, password };
@@ -40,13 +40,12 @@ export function AuthForm({ type }: AuthFormProps) {
       });
 
       const data = await response.json();
-
       if (!response.ok) {
         throw new Error(data.message || "Authentication failed");
       }
 
       // Handle email confirmation requirement
-      if (data.requiresEmailConfirmation) {
+      if (data.requiresEmailVerification) {
         setEmailSent(true);
         return;
       }
