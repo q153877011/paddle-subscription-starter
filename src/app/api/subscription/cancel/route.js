@@ -1,28 +1,16 @@
 import { callPaddleApi } from '../../lib/paddle-utils.js';
-import { createSupabaseAdminClient } from '../../lib/supabase.js';
+import { createSupabaseClient } from '../../lib/supabase.js';
 
-export async function onRequest(context) {
+export async function POST(request) {
   // Set CORS headers (development mode)
   const headers = {
     'Content-Type': 'application/json',
   };
 
-  // Handle preflight requests
-  if (context.request.method === 'OPTIONS') {
-    return new Response(null, { headers });
-  }
-
-  // Only allow POST requests
-  if (context.request.method !== 'POST') {
-    return new Response(
-      JSON.stringify({ success: false, message: 'Method not allowed' }),
-      { status: 405, headers }
-    );
-  }
 
   try {
     // Get the authorization token from the request
-    const authHeader = context.request.headers.get('Authorization');
+    const authHeader = request.headers.get('Authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return new Response(
         JSON.stringify({ success: false, message: 'Unauthorized' }),
@@ -33,7 +21,7 @@ export async function onRequest(context) {
     const token = authHeader.split(' ')[1];
     
     // Initialize Supabase client
-    const supabase = createSupabaseAdminClient(context);
+    const supabase = createSupabaseClient();
     
     // Verify user token and get user information
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
@@ -95,9 +83,9 @@ export async function onRequest(context) {
 
     try {
       // cancel the scheduled subscription first
-      await callPaddleApi(context, `/subscriptions/${subscription.subscription_id}`, 'PATCH', { scheduled_change: null});
+      await callPaddleApi(`/subscriptions/${subscription.subscription_id}`, 'PATCH', { scheduled_change: null});
       // cancel the scheduled subscription
-      const paddleResponse = await callPaddleApi(context, `/subscriptions/${subscription.subscription_id}/cancel`, 'POST', {
+      const paddleResponse = await callPaddleApi(`/subscriptions/${subscription.subscription_id}/cancel`, 'POST', {
         effective_from: 'immediately'
       });
       

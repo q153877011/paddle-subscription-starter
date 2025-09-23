@@ -3,7 +3,7 @@ import { callPaddleApi, getProductDetails } from '../../lib/paddle-utils.js';
 /**
  * Endpoint to get Paddle price information
  */
-export async function GET(request) {
+export async function GET() {
   // Set CORS headers (development mode)
   const headers = {
     'Content-Type': 'application/json',
