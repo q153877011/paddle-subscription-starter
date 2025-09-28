@@ -1,6 +1,7 @@
 import { createSupabaseClient } from '../../lib/supabase.js';
+import { cookiesOption } from '../../lib/cookies.js';
 
-export async function POST(request) {
+export async function onRequest(context) {
   // Set CORS headers (development mode)
   const headers = {
     'Content-Type': 'application/json',
@@ -8,7 +9,7 @@ export async function POST(request) {
 
   try {
     // Parse request body
-    const reqBody = await request.json();
+    const reqBody = context.request.body;
     const { email, password } = reqBody;
 
     if (!email || !password) {
@@ -19,7 +20,7 @@ export async function POST(request) {
     }
 
     // Initialize Supabase client
-    const supabase = createSupabaseClient();
+    const supabase = createSupabaseClient(context.env);
 
     // Use Supabase to login
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -35,18 +36,26 @@ export async function POST(request) {
       );
     }
 
+    // 创建 cookie 字符串
+    const cookieValue = `access_token=${data.session.access_token}; HttpOnly; Secure; SameSite=${cookiesOption.sameSite}; Max-Age=${cookiesOption.maxAge}; Path=/`;
+    
+    // 将 cookie 添加到响应头
+    const responseHeaders = {
+      ...headers,
+      'Set-Cookie': cookieValue
+    };
+
     // Successfully logged in, return token and user data
     return new Response(
       JSON.stringify({
         success: true,
-        token: data.session.access_token,
         user: {
           id: data.user.id,
           email: data.user.email,
           email_confirmed_at: data.user.email_confirmed_at,
         }
       }),
-      { status: 200, headers }
+      { status: 200, headers: responseHeaders }
     );
   } catch (error) {
     console.error('Error processing login request:', error);

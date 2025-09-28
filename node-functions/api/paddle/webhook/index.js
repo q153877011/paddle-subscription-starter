@@ -2,7 +2,7 @@ import { createSupabaseClient } from '../../lib/supabase.js';
 import { validateWebhookSignature, handleCustomerCreation, handleSubscriptionChange } from '../../lib/paddle-utils.js';
 
 // Webhook handler function
-export async function POST(request) {
+export async function onRequest(context) {
   // Set CORS headers (development mode)
   const headers = {
     'Content-Type': 'application/json',
@@ -10,7 +10,7 @@ export async function POST(request) {
 
   try {
     // 1. Get raw request body - important: don't process the request body
-    const rawBody = await request.text();
+    const rawBody = await context.request.body;
     let payload;
     
     try {
@@ -45,14 +45,10 @@ export async function POST(request) {
       console.log('Signature verification successful');
     } else {
       // Only allow unverified webhooks in development environment
-      if (process.env.NEXT_PUBLIC_DEV !== 'true') {
-        console.warn('Missing webhook secret or signature in production environment');
-        return new Response(
-          JSON.stringify({ success: false, message: 'Request missing required verification information' }),
-          { status: 401, headers }
-        );
-      }
-      console.warn('Development mode: Skipping webhook signature verification');
+      return new Response(
+        JSON.stringify({ success: false, message: 'Request missing required verification information' }),
+        { status: 401, headers }
+      );
     }
 
     // Initialize Supabase client

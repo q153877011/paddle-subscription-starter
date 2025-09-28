@@ -1,23 +1,18 @@
 import { createSupabaseClient } from '../../lib/supabase.js';
 
-export async function POST(request) {
+export async function onRequest(context) {
   // Set CORS headers (development mode)
   const headers = {
     'Content-Type': 'application/json',
   };
 
   try {
-    // Get the authorization token from the request
-    const authHeader = request.headers.get('Authorization');
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      const token = authHeader.split(' ')[1];
+    const accessToken = context.request.cookies['access_token'];
+    // Initialize Supabase client
+    const supabase = createSupabaseClient(context.env);
       
-      // Initialize Supabase client
-      const supabase = createSupabaseClient();
-      
-      // Use Supabase to logout
-      await supabase.auth.admin.signOut(token);
-    }
+    // Use Supabase to logout
+    await supabase.auth.admin.signOut(accessToken);
     
     // Even if there's no token or logout fails, we still return success because the client has already cleared the local token
     return new Response(

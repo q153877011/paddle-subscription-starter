@@ -5,8 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { setToken } from "@/lib/auth";
-
 interface AuthFormProps {
   type: "login" | "register";
 }
@@ -31,7 +29,7 @@ export function AuthForm({ type }: AuthFormProps) {
         ? { email, password } 
         : { name, email, password };
       console.log("????", process.env);
-      const response = await fetch(process.env.NEXT_PUBLIC_DEV ? `${process.env.NEXT_PUBLIC_API_URL_DEV}${endpoint}` : endpoint, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${endpoint}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -50,15 +48,7 @@ export function AuthForm({ type }: AuthFormProps) {
         return;
       }
 
-      // Save authentication token to localStorage
-      if (data.token) {
-        setToken(data.token);
-        
-        // Redirect to dashboard
-        window.location.href = "/dashboard";
-      } else {
-        setError("No authentication token received");
-      }
+      window.location.href = "/dashboard";
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error during authentication");
     } finally {

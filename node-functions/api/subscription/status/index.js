@@ -1,31 +1,26 @@
-import { callPaddleApi } from '../../lib/paddle-utils.js';
 import { createSupabaseClient } from '../../lib/supabase.js';
 
-export async function POST(request) {
+export async function onRequest(context) {
   // Set CORS headers (development mode)
   const headers = {
     'Content-Type': 'application/json',
   };
 
-
   try {
     // Get the authorization token from the request
-    const authHeader = request.headers.get('Authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    const access_token = context.request.cookies['access_token'];
+    if (!access_token) {
       return new Response(
         JSON.stringify({ success: false, message: 'Unauthorized' }),
         { status: 401, headers }
       );
     }
-
-    const token = authHeader.split(' ')[1];
     
     // Initialize Supabase client
-    const supabase = createSupabaseClient();
+    const supabase = createSupabaseClient(context.env);
     
     // Verify user token and get user information
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-    
+    const { data: { user }, error: authError } = await supabase.auth.getUser(access_token);
     if (authError || !user) {
       return new Response(
         JSON.stringify({ success: false, message: 'Invalid access token' }),
@@ -39,8 +34,7 @@ export async function POST(request) {
       .select('customer_id')
       .eq('email', user.email)
       .single();
-    
-    if (customerError) {
+    if (customerError && customerError.code !== 'PGRST116') { // PGRST116 is "No rows returned"
       console.error('Error getting customer:', customerError);
       return new Response(
         JSON.stringify({ success: false, message: 'Error getting customer information' }),
@@ -48,14 +42,15 @@ export async function POST(request) {
       );
     }
     
+    // If no customer record is found
     if (!customer) {
       return new Response(
-        JSON.stringify({ success: false, message: 'Customer record not found' }),
-        { status: 404, headers }
+        JSON.stringify({ success: true, subscription: null }),
+        { status: 200, headers }
       );
     }
     
-    // Get the user's active subscription
+    // Get active subscriptions
     const { data: subscription, error: subscriptionError } = await supabase
       .from('subscriptions')
       .select('*')
@@ -65,7 +60,7 @@ export async function POST(request) {
       .limit(1)
       .single();
     
-    if (subscriptionError) {
+    if (subscriptionError && subscriptionError.code !== 'PGRST116') {
       console.error('Error getting subscription:', subscriptionError);
       return new Response(
         JSON.stringify({ success: false, message: 'Error getting subscription information' }),
@@ -73,43 +68,14 @@ export async function POST(request) {
       );
     }
     
-    if (!subscription) {
-      return new Response(
-        JSON.stringify({ success: false, message: 'Active subscription not found' }),
-        { status: 404, headers }
-      );
-    }
+    // Return subscription information
+    return new Response(
+      JSON.stringify({ success: true, subscription: subscription || null }),
+      { status: 200, headers }
+    );
     
-
-    try {
-      // cancel the scheduled subscription first
-      await callPaddleApi(`/subscriptions/${subscription.subscription_id}`, 'PATCH', { scheduled_change: null});
-      // cancel the scheduled subscription
-      const paddleResponse = await callPaddleApi(`/subscriptions/${subscription.subscription_id}/cancel`, 'POST', {
-        effective_from: 'immediately'
-      });
-      
-      if (!paddleResponse.ok) {
-        throw new Error('Failed to cancel Paddle subscription');
-      }
-      
-    
-      return new Response(
-        JSON.stringify({
-          success: true,
-          message: 'Subscription successfully cancelled'
-        }),
-        { status: 200, headers }
-      );
-    } catch (paddleError) {
-      console.error('Paddle API error:', paddleError);
-      return new Response(
-        JSON.stringify({ success: false, message: paddleError.message || 'Error cancelling subscription' }),
-        { status: 500, headers }
-      );
-    }
   } catch (error) {
-    console.error('Error processing cancel subscription request:', error);
+    console.error('Error processing subscription status request:', error);
     return new Response(
       JSON.stringify({ success: false, message: error.message || 'Server error' }),
       { status: 500, headers }

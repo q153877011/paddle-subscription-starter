@@ -1,6 +1,6 @@
 import { createSupabaseClient } from '../../lib/supabase.js';
 
-export async function GET(request) {
+export async function onRequest(context) {
   // Set CORS headers (development mode)
   const headers = {
     'Content-Type': 'application/json',
@@ -8,21 +8,19 @@ export async function GET(request) {
 
   try {
     // Get the authorization token from the request
-    const authHeader = request.headers.get('Authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    const accessToken = context.request.cookies['access_token'];
+    if (!accessToken) {
       return new Response(
         JSON.stringify({ success: false, message: 'Unauthorized' }),
         { status: 401, headers }
       );
     }
-
-    const token = authHeader.split(' ')[1];
     
     // Initialize Supabase client
-    const supabase = createSupabaseClient();
+    const supabase = createSupabaseClient(context.env);
     
     // Verify user token and get user information
-    const { data, error } = await supabase.auth.getUser(token);
+    const { data, error } = await supabase.auth.getUser(accessToken);
     
     if (error || !data.user) {
       return new Response(

@@ -14,9 +14,7 @@ export async function checkSubscriptionStatus(): Promise<boolean> {
 
     // Call the subscription status API
     const response = await fetch(
-      process.env.NEXT_PUBLIC_DEV 
-        ? `${process.env.NEXT_PUBLIC_API_URL_DEV}/subscription/status` 
-        : `/subscription/status`,
+      "/api/subscription/status",
       {
         headers: {
           Authorization: `Bearer ${token}`,
