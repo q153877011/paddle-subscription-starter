@@ -36,6 +36,12 @@ export function SubscriptionPlans() {
     
     // Fetch prices from our API
     const fetchPrices = async () => {
+      if(!process.env.NEXT_PUBLIC_PADDLE_API_KEY) {
+        throw new Error('NEXT_PUBLIC_PADDLE_API_KEY is not defined');
+      }
+      if(!process.env.NEXT_PUBLIC_API_URL) {
+        throw new Error('NEXT_PUBLIC_API_URL is not defined');
+      }
       try {
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/paddle/prices`);
         if (!response.ok) {

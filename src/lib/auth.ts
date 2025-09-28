@@ -66,6 +66,9 @@ export async function getCurrentUser() {
 
 export async function login(email: string, password: string) {
   try {
+    if(!process.env.NEXT_PUBLIC_API_URL) {
+      throw new Error('NEXT_PUBLIC_API_URL is not defined');
+    }
     // Call authentication API
     const response = await fetch(
       `${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`,
@@ -99,6 +102,9 @@ export async function login(email: string, password: string) {
 
 export async function register(email: string, password: string, name: string) {
   try {
+    if(!process.env.NEXT_PUBLIC_API_URL) {
+      throw new Error('NEXT_PUBLIC_API_URL is not defined');
+    }
     // Call registration API
     const response = await fetch(
       `${process.env.NEXT_PUBLIC_API_URL}/api/auth/register`,

@@ -14,6 +14,9 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchSubscription = async () => {
       try {
+        if(!process.env.NEXT_PUBLIC_API_URL) {
+          throw new Error('NEXT_PUBLIC_API_URL is not defined');
+        }
         // Get subscription information from edge function API
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/api/subscription/status`,

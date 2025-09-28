@@ -7,6 +7,10 @@ import { LogoutButton } from './logout-button';
 export const dynamic = 'force-dynamic';
 
 async function checkSubscriptionStatus() {
+  if(!process.env.NEXT_PUBLIC_API_URL) {
+    console.error('NEXT_PUBLIC_API_URL is not defined');
+    return false;
+  }
   const cookieStore = await cookies();
   const response = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL}/api/auth/user`,
